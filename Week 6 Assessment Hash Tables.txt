@@ -1,4 +1,4 @@
-# Week 6 Assessment: Hash Tables & Sets
+# Week 6 Assessment: Hash Tables 
 Q1. Implement a hash table from scratch with put, get, delete, and resize methods. Use separate chaining for collision handling. Test with 20+ entries.
 
 # Answer
