@@ -1,0 +1,302 @@
+# Week 6 Assessment: Hash Tables & Sets
+Q1. Implement a hash table from scratch with put, get, delete, and resize methods. Use separate chaining for collision handling. Test with 20+ entries.
+
+# Answer
+class HashTable:
+    def __init__(self, capacity=10):
+        self.capacity = capacity
+        self.size = 0
+        self.buckets = [[] for _ in range(capacity)]
+
+    def _hash(self, key):
+        return hash(key) % self.capacity
+
+    def put(self, key, value):
+        index = self._hash(key)
+        for pair in self.buckets[index]:
+            if pair[0] == key:
+                pair[1] = value
+                return
+
+        self.buckets[index].append([key, value])
+        self.size += 1
+        if self.size / self.capacity > 0.75:
+            self.resize()
+    def get(self, key):
+        index = self._hash(key)
+        for k, v in self.buckets[index]:
+            if k == key:
+                return v
+        return None
+
+    def delete(self, key):
+        index = self._hash(key)
+        for i, (k, v) in enumerate(self.buckets[index]):
+            if k == key:
+                del self.buckets[index][i]
+                self.size -= 1
+                return True
+
+        return False
+
+    def resize(self):
+        old_buckets = self.buckets
+        self.capacity *= 2
+        self.buckets = [[] for _ in range(self.capacity)]
+        self.size = 0
+        for bucket in old_buckets:
+            for key, value in bucket:
+                self.put(key, value)
+
+# Test with 20+ Entries
+ht = HashTable()
+
+for i in range(25):
+    ht.put(f"key{i}", i)
+
+print(ht.get("key20"))
+print(ht.delete("key20"))
+print(ht.get("key20"))
+
+
+---
+
+Q2. Explain what happens during a hash collision. Compare separate chaining vs open addressing (linear probing). Which does Python's dict use?
+#Answer
+
+A hash collision occurs when two different keys produce the same hash index.
+Example:
+hash("cat") = 5
+hash("dog") = 5
+Both keys try to store data at index 5
+# Separate Chaining
+Store multiple elements in a list at the same bucket.
+Bucket 5:
+(cat,10) -> (dog,20)
+
+Advantages:
+
+* Easy implementation
+* Less clustering
+
+Disadvantages:
+
+* Extra memory required
+
+#Open Addressing (Linear Probing)
+Find the next empty slot.
+
+Index 5 occupied
+Check 6
+Check 7
+Check 8 ...
+
+Advantages:
+1.Memory efficient
+
+Disadvantages:
+1.Clustering problem
+# Python Dictionary
+Python dict uses:
+Open Addressing with Probing
+
+
+Q3. Write a function that groups anagrams together from a list of strings. Example: ['eat','tea','tan','ate','nat','bat'] → [['eat','tea','ate'],['tan','nat'],['bat']].
+
+# Answer
+from collections import defaultdict
+  def group_anagrams(words):
+    groups = defaultdict(list)
+
+    for word in words:
+        key = ''.join(sorted(word))
+        groups[key].append(word)
+
+    return list(groups.values())
+
+
+Example:
+words = ['eat','tea','tan','ate','nat','bat']
+print(group_anagrams(words))
+
+Output:
+[['eat','tea','ate'],
+ ['tan','nat'],
+ ['bat']]
+Time Complexity:
+
+O(n * k log k)
+where k = average string length.
+
+---
+
+Q4. Find the longest consecutive sequence in an unsorted array. Example: [100,4,200,1,3,2] → 4 (the sequence 1,2,3,4). Achieve O(n) time complexity.
+# Answer
+def longest_consecutive(nums):
+    num_set = set(nums)
+    longest = 0
+    for num in num_set:
+        if num - 1 not in num_set:
+
+            current = num
+            length = 1
+
+            while current + 1 in num_set:
+                current += 1
+                length += 1
+
+            longest = max(longest, length)
+    return longest
+
+Example:
+nums = [100,4,200,1,3,2]
+print(longest_consecutive(nums))
+Output:
+4
+Time Complexity:
+O(n)
+---
+
+Q5. Given an array of integers, return the top k most frequent elements using a bucket sort approach (not heap). Explain why this is O(n).
+#Answer
+def top_k_frequent(nums, k):
+
+    freq = {}
+
+    for num in nums:
+        freq[num] = freq.get(num, 0) + 1
+    buckets = [[] for _ in range(len(nums)+1)]
+    for num, count in freq.items():
+        buckets[count].append(num)
+    result = []
+
+    for i in range(len(buckets)-1, 0, -1):
+        for num in buckets[i]:
+            result.append(num)
+            if len(result) == k:
+                return result
+
+
+Example:
+nums = [1,1,1,2,2,3]
+print(top_k_frequent(nums,2))
+Output:
+[1,2]
+
+#Why O(n)?
+Frequency Count = O(n)
+Bucket Creation = O(n)
+Bucket Traversal = O(n)
+
+Total = O(n)
+---
+
+Q6. Write a function that finds all pairs in an array that sum to a given target. Handle duplicate pairs. Return unique pairs only.
+# Answer
+def find_pairs(nums, target):
+
+    seen = set()
+    result = set()
+    for num in nums:
+        complement = target - num
+        if complement in seen:
+            result.add(tuple(sorted((num, complement))))
+
+        seen.add(num)
+
+    return list(result)
+
+Example:
+nums = [1,2,3,4,5,2,3]
+target = 5
+
+print(find_pairs(nums,target))
+Output:[(1,4), (2,3)]
+Time Complexity:
+O(n)
+
+---
+Q7. Implement an LRU Cache with O(1) get and put operations. Hint: combine a hash map with a doubly linked list.
+# Answer
+from collections import OrderedDict
+class LRUCache:
+
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.cache = OrderedDict()
+
+    def get(self, key):
+        if key not in self.cache:
+            return -1
+        self.cache.move_to_end(key)
+        return self.cache[key]
+
+    def put(self, key, value):
+
+        if key in self.cache:
+            self.cache.move_to_end(key)
+
+        self.cache[key] = value
+
+        if len(self.cache) > self.capacity:
+            self.cache.popitem(last=False)
+Example:
+cache = LRUCache(2)
+cache.put(1,1)
+cache.put(2,2)
+
+print(cache.get(1))
+Output:
+1
+
+Complexity:
+get() = O(1)
+put() = O(1)
+
+---
+Q8. Given a sudoku board (9×9), write a function to check if it is valid using hash sets for rows, columns, and 3×3 boxes.
+
+# Answer
+def is_valid_sudoku(board):
+
+    rows = [set() for _ in range(9)]
+    cols = [set() for _ in range(9)]
+    boxes = [set() for _ in range(9)]
+    for r in range(9):
+        for c in range(9):
+
+            num = board[r][c]
+
+            if num == '.':
+                continue
+
+            box = (r // 3) * 3 + c // 3
+
+            if (num in rows[r] or
+                num in cols[c] or
+                num in boxes[box]):
+                return False
+
+            rows[r].add(num)
+            cols[c].add(num)
+            boxes[box].add(num)
+
+    return True
+#Approach
+
+Use:
+
+* 9 row sets
+* 9 column sets
+* 9 box sets
+If a number already exists in any corresponding set:
+Return False
+Otherwise:
+Add number to sets
+Continue checking
+Time Complexity:
+
+O(81) = O(1)
+Space Complexity:
+O(81)
+
